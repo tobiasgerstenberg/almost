@@ -25,7 +25,8 @@
     var actors = [];  // instances of Bitmap (from IvanK)
     var scale = 60; //pixel to meter ratio; 1 meter = 60 pixels
     var speed;
-    var ratio; //pixelratio (important for retina displays)
+    // var ratio = 1; //pixelratio (important for retina displays)
+    var ratio = window.devicePixelRatio;
     var stage; //the stage   
 
     //Parameters 
@@ -63,12 +64,13 @@
       }
 
       width = stage.stageWidth; 
-      height = stage.stageHeight; 
-      ratio = window.devicePixelRatio;
-      speed = 2*ratio;
+      height = stage.stageHeight; ; 
+      // ratio = window.devicePixelRatio;
+      // speed = 1+ratio;
+      speed = ratio*2;
       
       //setup world 
-      var gravity = new b2Vec2(0,10) //neither gravity in x nor in y direction 
+      var gravity = new b2Vec2(ratio*0,ratio*10) //neither gravity in x nor in y direction 
       world = new b2World(gravity);
 
       //Setup of the world 
@@ -285,15 +287,13 @@
       createBox(
       (width/6)/scale, //width
       (10*ratio)/scale, //height 
-      ((width/2)+290)/scale,//x
+      ((width/2)+290*ratio)/scale,//x
       (height-10*ratio)/scale, //y
       1, //friction
       0, //restitution
       b2Body.b2_staticBody, //what type of body
       "ground", //userdata 
       "target_region.png") //image
-
-      console.log(world_setup[clip][5])
 
       if (world_setup[clip][5] == true){
         //wall 
@@ -340,15 +340,15 @@
       // apply small perturbation
       if (counter == 1){
           var impulse = parent.document.getElementById("impulse").value/10;
-          var x_impulse = ball.GetLinearVelocity().x*impulse;
-          var y_impulse = ball.GetLinearVelocity().y*impulse;
-          ball.ApplyImpulse(new b2Vec2(x_impulse,y_impulse), ball.GetPosition())
+          var x_impulse = ball.GetLinearVelocity().x*ratio*impulse;
+          var y_impulse = ball.GetLinearVelocity().y*ratio*impulse;
+          ball.ApplyImpulse(new b2Vec2(x_impulse*ratio,y_impulse*ratio), ball.GetPosition())
       }
 
       //check whether ball arrived in target region
       if (counter == 300){
         var target_reached = false;
-        if(ball.GetPosition().x > 9.3){
+        if(ball.GetPosition().x > 9.3*ratio){
           target_reached = true;
         }
         console.log("target reached? ", target_reached)

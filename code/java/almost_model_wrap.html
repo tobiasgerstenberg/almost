@@ -52,26 +52,25 @@
 <body>
 
   <div id="game">
-    <iframe src="physics_template.html" width=800 height=600 id="game-frame"></iframe>
-    <!-- <iframe src="physics_simulation.html" width=800 height=600 id="game-frame"></iframe> -->
+    <iframe src="almost_model.html" width=800 height=600 id="game-frame"></iframe>
   </div>
 
 <br>
 
-<form>
-  clip number: <input type="text" id="clip" value = "8"> (between 1 and 8)
-</form>
-
-<form>
-  impulse: <input type="text" id="impulse" value = "0">
-</form>
+<p>Please type in a clip number and press <b>Start</b> to view the clip.</p>
+<p>You can apply an additional impulse to the ball to see how much more it takes for the ball to reach the reg target region.</p>
 
 <br>
 
+<form>
+  clip number: <input type="text" id="clip" value = "1"> (between 1 and 8)
+</form>
+
+<form>
+  impulse: <input type="text" id="additional impulse" value = "0"> (between 0 and 20)
+</form>
+
+<br>
    <button type="button" onclick="Start()"; >Start</button>
-   <!-- <button type="button" onclick="Trigger()"; >Start</button> -->
-   <button type="button" onclick="Pause()"; >Pause</button>
-   <button type="button" onclick="Resume()"; >Resume</button>
-   <button type="button" onclick="RemoveWall()"; >Remove wall</button>
   </body>
 </html>
