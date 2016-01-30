@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="Box2dWeb-2.1.a.3.js"></script>
+  <script src="Blob.js"></script>
+  <script src="ivank.js"></script>
+  <script src="canvas-to-blob.js"></script>
+  <script src="FileSaver.js"></script>
+  <script>
+    
+    //Declaring a bunch of required box2d variables
+    var b2Vec2    = Box2D.Common.Math.b2Vec2,
+    b2BodyDef = Box2D.Dynamics.b2BodyDef,
+    b2Body    = Box2D.Dynamics.b2Body,
+    b2FixtureDef  = Box2D.Dynamics.b2FixtureDef,
+    b2Fixture  = Box2D.Dynamics.b2Fixture,
+    b2World   = Box2D.Dynamics.b2World,
+    b2PolygonShape  = Box2D.Collision.Shapes.b2PolygonShape;
+    b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
+    b2ContactListener = Box2D.Dynamics.b2ContactListener;
+    
+    // Global variables
+    var world;
+    var bodies = [];  // instances of b2Body (from Box2D)
+    var actors = [];  // instances of Bitmap (from IvanK)
+    var scale = 60; //pixel to meter ratio; 1 meter = 60 pixels
+    var speed;
+    var ratio; //pixelratio (important for retina displays)
+    var stage; //the stage   
+
+    //Parameters 
+    var step = 60;
+    var short_high = 1.8;
+    var short_low = 1.65;
+    var long_high  = 2.2;
+    var long_low = 2;
+
+    var damping_weak = 2;
+    var damping_strong = 10;
+
+
+    //START FUNCTION
+    function Start()
+    {
+      //counter for the world
+      counter = 0;
+
+      //set up the stage 
+      console.log("event")
+
+      if (stage == undefined )
+      {
+        stage = new Stage("c");  
+      } else{
+        for (var i=0; i<actors.length; i++)
+        {
+          var actor=actors[i];
+          stage.removeChild(actor);
+        }
+        bodies = [];  // clear the body and actor vectors
+        actors = [];  //
+        stage.removeEventListener(Event.ENTER_FRAME, onEF);
+      }
+
+      width = stage.stageWidth; 
+      height = stage.stageHeight; 
+      ratio = window.devicePixelRatio;
+      speed = 2*ratio;
+      
+      //setup world 
+      var gravity = new b2Vec2(0,10) //neither gravity in x nor in y direction 
+      world = new b2World(gravity);
+
+      //Setup of the world 
+      var world_setup = new Array();
+
+      //clip 1: short (throw), high (angle), absent (wall)
+      world_setup[0] = [(50*ratio)/scale, //ball x.position
+                                    (500*ratio)/scale, //ball y.position
+                                    speed*short_high, //ball x.velocity
+                                    speed*-short_high*2, //ball y.velocity
+                                    damping_strong, //ball damping
+                                    false]; //wall 
+      
+      //clip 2: short, high, present
+      world_setup[1] = [(50*ratio)/scale, //ball x.position
+                                    (500*ratio)/scale, //ball y.position
+                                    speed*short_high, //ball x.velocity
+                                    speed*-short_high*2, //ball y.velocity
+                                    damping_strong, //ball damping
+                                    true]; //wall 
+
+      //clip 3: short, low, absent                              
+      world_setup[2] = [(50*ratio)/scale, //ball x.position
+                                    (500*ratio)/scale, //ball y.position
+                                    speed*short_low, //ball x.velocity
+                                    speed*-short_low*2,//ball y.velocity
+                                    damping_weak, //ball damping
+                                    false]; //wall 
+
+      //clip 4: short, low, present                              
+      world_setup[3] = [(50*ratio)/scale, //ball x.position
+                                    (500*ratio)/scale, //ball y.position
+                                    speed*short_low, //ball x.velocity
+                                    speed*-short_low*2,//ball y.velocity
+                                    damping_weak, //ball damping
+                                    true]; //wall 
+
+      //clip 5: long, high, absent
+      world_setup[4] = [(50*ratio)/scale, //ball x.position
+                                    (500*ratio)/scale, //ball y.position
+                                    speed*long_high, //ball x.velocity
+                                    speed*-long_high*2, //ball y.velocity
+                                    damping_strong, //ball damping
+                                    false]; //wall 
+      
+      //clip 6: long, high, present
+      world_setup[5] = [(50*ratio)/scale, //ball x.position
+                                    (500*ratio)/scale, //ball y.position
+                                    speed*long_high, //ball x.velocity
+                                    speed*-long_high*2, //ball y.velocity
+                                    damping_strong, //ball damping
+                                    true]; //wall 
+
+      //clip 7: long, low, absent 
+      world_setup[6] = [(50*ratio)/scale, //ball x.position
+                                    (500*ratio)/scale, //ball y.position
+                                    speed*long_low, //ball x.velocity
+                                    speed*-long_low*2,//ball y.velocity
+                                    damping_weak, //ball damping
+                                    false]; //wall 
+      
+      //clip 8: long, low, present
+      world_setup[7] = [(50*ratio)/scale, //ball x.position
+                                    (500*ratio)/scale, //ball y.position
+                                    speed*long_low, //ball x.velocity
+                                    speed*-long_low*2,//ball y.velocity
+                                    damping_weak, //ball damping
+                                    true]; //wall 
+      
+    //FUNCTION FOR CREATING WALLS 
+    function createBox(w, h, x, y, fric, res, type, userData, img){
+      // Create the fixture definition
+      var fixDef = new b2FixtureDef;
+
+      fixDef.density = 1; // Set the density
+      fixDef.friction = fric; // Set the friction 
+      fixDef.restitution = res; // Set the restitution - elasticity
+
+      // Define the shape of the fixture
+      fixDef.shape = new b2PolygonShape;
+      fixDef.shape.SetAsBox(
+                            w // input should be half the width
+                            , h // input should be half the height 
+                            );
+
+      // Create the body definition
+      var bodyDef = new b2BodyDef;
+      bodyDef.type = type;
+
+      // Set the position of the body
+      bodyDef.position.x = x;
+      bodyDef.position.y = y;
+
+      // Create the body in the box2d world
+      var b = world.CreateBody(bodyDef);
+      b.CreateFixture(fixDef);
+
+      //assign user data (name)
+      b.SetUserData(userData);
+      
+      //add to list of bodies
+      bodies.push(b);
+
+      //add image
+      var bd = new BitmapData(img);
+      var bm = new Bitmap(bd);  
+      bm.x = -30; 
+      bm.y = -30;
+      var actor = new Sprite(); 
+      actor.addChild(bm);        
+      actor.scaleX = 2*w; 
+      actor.scaleY = 2*h;
+      stage.addChild(actor);
+      actors.push(actor);
+
+      return b;
+    }
+
+    // FUNCTION FOR CREATING BALLS
+      function createBall(r, x, y, linx, liny, type, userData, img){
+      // Create the fixture definition
+      var fixDef = new b2FixtureDef;
+      fixDef.density = 3; // Set the density
+      fixDef.friction = 1; // Set the friction
+      fixDef.restitution = 0.1; // Set the restitution - bounciness
+
+      // Define the shape of the fixture
+      fixDef.shape = new b2CircleShape;
+      fixDef.shape.SetRadius(r);
+
+      // Create the body definition
+      var bodyDef = new b2BodyDef;
+      bodyDef.type = type;
+
+      // Set the position of the body
+      bodyDef.position.x = x;
+      bodyDef.position.y = y;
+
+      var linearVelocity  = new b2Vec2(linx,liny)
+
+      // Set the linear velocities 
+      bodyDef.linearVelocity = linearVelocity;
+      bodyDef.linearDamping = 0.1;
+
+      // Create the body in the box2d world
+      var b = world.CreateBody(bodyDef);
+      b.CreateFixture(fixDef);
+
+      //assign user data (name)
+      b.SetUserData(userData);
+
+      //add to list of bodies 
+      bodies.push(b);
+
+      //add image
+      var bd = new BitmapData(img);
+      var bm = new Bitmap(bd);  
+      bm.x = -30; 
+      bm.y = -30;
+      var actor = new Sprite(); 
+      actor.addChild(bm);
+      actor.scaleX = 2*r; 
+      actor.scaleY = 2*r;
+      stage.addChild(actor);
+      actors.push(actor);
+
+      return b;
+    }
+
+      // CONTACT LISTENERS (can be defined)
+      var listener = new b2ContactListener();
+      listener.BeginContact = function(contact) {
+        var fixtureA = contact.GetFixtureA();
+        var fixtureB = contact.GetFixtureB();
+        
+        var clip = parent.document.getElementById("clip").value-1;  
+        if(fixtureA.GetBody().GetUserData() == "ground" & fixtureB.GetBody().GetUserData() == "ball"){
+          ball.SetLinearDamping(world_setup[clip][4]);
+        }
+        if(fixtureA.GetBody().GetUserData() == "ball" & fixtureB.GetBody().GetUserData() == "ground"){
+         ball.SetLinearDamping(world_setup[clip][4]);
+        }
+      }
+
+      listener.EndContact = function(contact) {}
+
+
+      var clip = parent.document.getElementById("clip").value-1
+
+      createBall(
+        .5 *ratio, //radius
+        world_setup[clip][0], //x position
+        world_setup[clip][1], //y position
+        world_setup[clip][2], //linear velocity in x direction
+        world_setup[clip][3], //linear velocity in y direction
+        b2Body.b2_dynamicBody, //body type
+        "ball", //user data 
+        "ball.png" //image
+        )
+
+      //ground
+      createBox(
+      (width/2)/scale, //width
+      (10*ratio)/scale, //height 
+      (width/2)/scale,//x
+      (height-10*ratio)/scale, //y
+      1, //friction
+      0, //restitution
+      b2Body.b2_staticBody, //what type of body
+      "ground", //userdata 
+      "border.png") //image
+
+      //target region
+      createBox(
+      (width/6)/scale, //width
+      (10*ratio)/scale, //height 
+      ((width/2)+290)/scale,//x
+      (height-10*ratio)/scale, //y
+      1, //friction
+      0, //restitution
+      b2Body.b2_staticBody, //what type of body
+      "ground", //userdata 
+      "target_region.png") //image
+
+      console.log(world_setup[clip][5])
+
+      if (world_setup[clip][5] == true){
+        //wall 
+        createBox(
+        (10*ratio)/scale, //width
+        (40*ratio)/scale, //height 
+        (550*ratio)/scale,//x
+        ((height-40*ratio))/scale, //y
+        0.5, //friction
+        0.4, //restitution
+        b2Body.b2_staticBody, //what type of body
+        "wall", //userdata 
+        "border.png") //image
+      }
+
+
+    //ADD CONTACT LISTENER
+    world.SetContactListener(listener);
+
+    //RUN UPDATE FUNCTION 
+    StartUpdate();
+
+  } // end Start()
+   
+    //WORLD UPDATE FUNCTION
+    function onEF(e)
+    {
+     world.Step(1/step,  10,  10);
+     world.ClearForces();
+     
+     for(var i=0; i<actors.length; i++)
+     {
+        var body  = bodies[i];
+        // debugger;
+        var actor = actors [i];
+        var p = body.GetPosition();
+        actor.x = p.x * scale;  
+        actor.y = p.y * scale;
+        actor.rotation = 0;
+      }
+
+      ball = bodies[0];
+
+      // apply small perturbation
+      if (counter == 1){
+          var impulse = parent.document.getElementById("impulse").value/10;
+          var x_impulse = ball.GetLinearVelocity().x*impulse;
+          var y_impulse = ball.GetLinearVelocity().y*impulse;
+          ball.ApplyImpulse(new b2Vec2(x_impulse,y_impulse), ball.GetPosition())
+      }
+
+      //check whether ball arrived in target region
+      if (counter == 300){
+        var target_reached = false;
+        if(ball.GetPosition().x > 9.3){
+          target_reached = true;
+        }
+        console.log("target reached? ", target_reached)
+      }
+      counter++
+    } //end update 
+
+    //ADDITIONAL FUNCTIONS 
+    function StartUpdate() {
+      stage.addEventListener(Event.ENTER_FRAME, onEF);
+    }
+    function StopUpdate() {
+      stage.removeEventListener(Event.ENTER_FRAME, onEF);
+    }
+
+    function RemoveWall(){
+          stage.removeChild(actors[3]);
+          world.DestroyBody(bodies[3]);
+    }
+
+  </script>
+</head>
+<body>
+  <canvas width="800" height="600" id="c" ></canvas>
+</body>
+</html>

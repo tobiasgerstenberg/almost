@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="canvas-to-blob.js"></script>
+  <script src="FileSaver.js"></script>
+  <script>
+
+  function Start() {
+    var iframe = document.getElementById("game-frame");
+    if (iframe) {
+      var iframeContent = (iframe.contentWindow || iframe.contentDocument);
+      iframeContent.Start();
+    }
+  }
+
+  function Trigger() {
+    var iframe = document.getElementById("game-frame");
+    if (iframe) {
+      var iframeContent = (iframe.contentWindow || iframe.contentDocument);
+      iframeContent.Trigger();
+    }
+  }
+
+  function Pause() {
+    var iframe = document.getElementById("game-frame");
+    if (iframe) {
+      var iframeContent = (iframe.contentWindow || iframe.contentDocument);
+      iframeContent.StopUpdate();
+    }
+  }
+
+  function Resume() {
+    var iframe = document.getElementById("game-frame");
+    if (iframe) {
+      var iframeContent = (iframe.contentWindow || iframe.contentDocument);
+      iframeContent.StartUpdate();
+    }
+  }
+
+  function RemoveWall() {
+    var iframe = document.getElementById("game-frame");
+    if (iframe) {
+      var iframeContent = (iframe.contentWindow || iframe.contentDocument);
+      iframeContent.RemoveWall();
+    }
+  }
+
+  </script>
+
+</head>
+
+<body>
+
+  <div id="game">
+    <iframe src="physics_template.html" width=800 height=600 id="game-frame"></iframe>
+    <!-- <iframe src="physics_simulation.html" width=800 height=600 id="game-frame"></iframe> -->
+  </div>
+
+<br>
+
+<form>
+  clip number: <input type="text" id="clip" value = "7"> (between 1 and 8)
+</form>
+
+<form>
+  impulse: <input type="text" id="impulse" value = "0">
+</form>
+
+<br>
+
+   <button type="button" onclick="Start()"; >Start</button>
+   <!-- <button type="button" onclick="Trigger()"; >Start</button> -->
+   <button type="button" onclick="Pause()"; >Pause</button>
+   <button type="button" onclick="Resume()"; >Resume</button>
+   <button type="button" onclick="RemoveWall()"; >Remove wall</button>
+  </body>
+</html>
